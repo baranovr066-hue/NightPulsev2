@@ -7,13 +7,20 @@ local TweenService = game:GetService("TweenService")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
--- [ Очистка ] --
-if game.CoreGui:FindFirstChild("NightPulse_V2_Official") then game.CoreGui.NightPulse_V2_Official:Destroy() end
+_G.boxEsp = false
+_G.tracers = false
+_G.showNames = false
+_G.showDist = false
+_G.aimOn = false
+
+if game.CoreGui:FindFirstChild("NightPulse_V2_Official") then 
+    game.CoreGui.NightPulse_V2_Official:Destroy() 
+end
 
 local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
 ScreenGui.Name = "NightPulse_V2_Official"
+ScreenGui.IgnoreGuiInset = true
 
--- [ КНОПКА ОТКРЫТИЯ ] --
 local ToggleBtn = Instance.new("TextButton", ScreenGui)
 ToggleBtn.Size = UDim2.new(0, 110, 0, 35)
 ToggleBtn.Position = UDim2.new(0, 10, 0.5, -17)
@@ -24,7 +31,6 @@ ToggleBtn.Font = Enum.Font.GothamBold
 ToggleBtn.TextSize = 12
 Instance.new("UICorner", ToggleBtn)
 
--- [ ГЛАВНОЕ МЕНЮ ] --
 local MainMenu = Instance.new("Frame", ScreenGui)
 MainMenu.Size = UDim2.new(0, 440, 0, 400)
 MainMenu.Position = UDim2.new(0.5, -220, 0.5, -200)
@@ -35,13 +41,11 @@ local Stroke = Instance.new("UIStroke", MainMenu)
 Stroke.Color = Color3.fromRGB(110, 0, 255)
 Stroke.Thickness = 2
 
--- Сайдбар
 local Sidebar = Instance.new("Frame", MainMenu)
 Sidebar.Size = UDim2.new(0, 110, 1, 0)
 Sidebar.BackgroundColor3 = Color3.fromRGB(22, 22, 26)
 Instance.new("UICorner", Sidebar)
 
--- Контейнер
 local Container = Instance.new("Frame", MainMenu)
 Container.Size = UDim2.new(1, -125, 1, -10)
 Container.Position = UDim2.new(0, 120, 0, 5)
@@ -59,13 +63,13 @@ for _, p in pairs(Pages) do
     p.BackgroundTransparency = 1
     p.Visible = false
     p.ScrollBarThickness = 2
+    p.CanvasSize = UDim2.new(0,0,2,0)
     p.ScrollBarImageColor3 = Color3.fromRGB(110, 0, 255)
     local layout = Instance.new("UIListLayout", p)
     layout.Padding = UDim.new(0, 6)
 end
 Pages.Visuals.Visible = true
 
--- [ ФУНКЦИИ ИНТЕРФЕЙСА ] --
 local function CreateTab(name, page, y)
     local b = Instance.new("TextButton", Sidebar)
     b.Size = UDim2.new(1, 0, 0, 45)
@@ -99,55 +103,21 @@ local function CreateToggle(parent, text, var)
     end)
 end
 
--- Наполнение CHANGELOG
 local function AddLog(text, color)
     local l = Instance.new("TextLabel", Pages.Changelog)
-    l.Size = UDim2.new(1, -10, 0, 25)
-    l.BackgroundTransparency = 1
-    l.Text = "• " .. text
-    l.TextColor3 = color or Color3.new(0.8, 0.8, 0.8)
-    l.Font = Enum.Font.Gotham
-    l.TextSize = 12
-    l.TextXAlignment = Enum.TextXAlignment.Left
-    l.TextWrapped = true
+    l.Size = UDim2.new(1, -10, 0, 25); l.BackgroundTransparency = 1; l.Text = "• " .. text
+    l.TextColor3 = color or Color3.new(0.8, 0.8, 0.8); l.Font = Enum.Font.Gotham; l.TextSize = 12; l.TextXAlignment = Enum.TextXAlignment.Left
 end
 
-AddLog("NIGHTPULSE V2 - OFFICIAL RELEASE", Color3.fromRGB(110, 0, 255))
-AddLog("TG: t.me/Nightpulsev2", Color3.fromRGB(0, 170, 255))
-AddLog("-----------------------------------", Color3.new(0.3, 0.3, 0.3))
-AddLog("ИСПРАВЛЕНО: Размер 2D боксов (теперь адаптивный)", Color3.new(0, 1, 0))
-AddLog("ИСПРАВЛЕНО: Визуалы больше не багаются", Color3.new(1, 1, 0))
-AddLog("ИЗМЕНЕНИЕ: Удалено здоровье (временно)", Color3.new(1, 0, 0))
-
--- Кнопка ссылки
-local TGButton = Instance.new("TextButton", Pages.Changelog)
-TGButton.Size = UDim2.new(1, -10, 0, 35)
-TGButton.BackgroundColor3 = Color3.fromRGB(0, 136, 204)
-TGButton.Text = "ОФИЦИАЛЬНЫЙ TELEGRAM"
-TGButton.TextColor3 = Color3.new(1,1,1)
-TGButton.Font = Enum.Font.GothamBold
-TGButton.TextSize = 12
-Instance.new("UICorner", TGButton)
-TGButton.MouseButton1Click:Connect(function()
-    setclipboard("https://t.me/Nightpulsev2")
-    TGButton.Text = "ССЫЛКА СКОПИРОВАНА!"
-    task.wait(2)
-    TGButton.Text = "ОФИЦИАЛЬНЫЙ TELEGRAM"
-end)
-
--- Визуалы (Без здоровья)
+AddLog("NIGHTPULSE V2 - INSTANT AIM", Color3.fromRGB(110, 0, 255))
 CreateToggle(Pages.Visuals, "2D Boxes", "boxEsp")
 CreateToggle(Pages.Visuals, "Tracers", "tracers")
 CreateToggle(Pages.Visuals, "Show Names", "showNames")
 CreateToggle(Pages.Visuals, "Show Distance", "showDist")
-CreateToggle(Pages.Combat, "Instant Aimbot", "aimOn")
-CreateToggle(Pages.Security, "Safe Anti-AFK", "antiAfk")
-CreateToggle(Pages.Security, "Anti-Report Logger", "antiReport")
-CreateToggle(Pages.Security, "Hide Client ID", "hideId")
+CreateToggle(Pages.Combat, "Instant Auto-Aim", "aimOn")
 
 ToggleBtn.MouseButton1Click:Connect(function() MainMenu.Visible = not MainMenu.Visible end)
 
--- [ ESP & COMBAT LOGIC ] --
 local espObjects = {}
 local function CreateDraw(type, props)
     local obj = Drawing.new(type)
@@ -155,67 +125,78 @@ local function CreateDraw(type, props)
     return obj
 end
 
+local function RemoveESP(name)
+    if espObjects[name] then
+        for _, v in pairs(espObjects[name]) do v:Remove() end
+        espObjects[name] = nil
+    end
+end
+
+local function IsVisible(part)
+    local char = LocalPlayer.Character
+    if not char then return false end
+    local params = RaycastParams.new()
+    params.FilterType = Enum.RaycastFilterType.Exclude
+    params.FilterDescendantsInstances = {char, ScreenGui}
+    local result = workspace:Raycast(Camera.CFrame.Position, (part.Position - Camera.CFrame.Position).Unit * 1000, params)
+    if result and result.Instance:IsDescendantOf(part.Parent) then return true end
+    return result == nil
+end
+
+Players.PlayerRemoving:Connect(function(p) RemoveESP(p.Name) end)
+
 RunService.RenderStepped:Connect(function()
     for _, p in pairs(Players:GetPlayers()) do
         if p == LocalPlayer then continue end
         if not espObjects[p.Name] then
             espObjects[p.Name] = {
-                box = CreateDraw("Square", {Thickness = 1, Color = Color3.new(1,1,1), Filled = false}),
-                tr = CreateDraw("Line", {Thickness = 1, Color = Color3.new(1,1,1)}),
-                info = CreateDraw("Text", {Size = 13, Color = Color3.new(1,1,1), Center = true, Outline = true})
+                box = CreateDraw("Square", {Thickness = 1, Color = Color3.fromRGB(110, 0, 255), Filled = false, Visible = false}),
+                tr = CreateDraw("Line", {Thickness = 1, Color = Color3.fromRGB(110, 0, 255), Visible = false}),
+                info = CreateDraw("Text", {Size = 13, Color = Color3.new(1,1,1), Center = true, Outline = true, Visible = false})
             }
         end
         local d = espObjects[p.Name]
         local char = p.Character
         local hrp = char and char:FindFirstChild("HumanoidRootPart")
         local hum = char and char:FindFirstChildOfClass("Humanoid")
-
         if hrp and hum and hum.Health > 0 then
             local pos, onS = Camera:WorldToViewportPoint(hrp.Position)
             if onS then
-                -- ИСПРАВЛЕННЫЙ РАСЧЕТ РАЗМЕРА БОКСА
-                local distance = pos.Z
-                local sizeY = (Camera.ViewportSize.Y / distance) * 4 -- Адаптивная высота
-                local sizeX = sizeY * 0.6 -- Адаптивная ширина
-                
+                local distance = (Camera.CFrame.Position - hrp.Position).Magnitude
+                local sizeY = (Camera.ViewportSize.Y / distance) * 3
+                local sizeX = sizeY * 1.5
                 local bPos = Vector2.new(pos.X - sizeX/2, pos.Y - sizeY/2)
-                
                 d.box.Visible = _G.boxEsp
                 d.box.Size = Vector2.new(sizeX, sizeY)
                 d.box.Position = bPos
-                
-                if _G.showNames or _G.showDist then
-                    d.info.Visible = true
-                    d.info.Position = Vector2.new(pos.X, bPos.Y - 15)
-                    local t = (_G.showNames and p.Name or "") .. (_G.showDist and " ["..math.floor(distance).."m]" or "")
-                    d.info.Text = t
-                else d.info.Visible = false end
-                
-                if _G.tracers then 
-                    d.tr.Visible = true
-                    d.tr.From = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y)
-                    d.tr.To = Vector2.new(pos.X, pos.Y + sizeY/2)
-                else d.tr.Visible = false end
+                d.info.Visible = (_G.showNames or _G.showDist)
+                d.info.Position = Vector2.new(pos.X, bPos.Y - 15)
+                d.info.Text = (_G.showNames and p.Name or "") .. (_G.showDist and " ["..math.floor(distance).."m]" or "")
+                d.tr.Visible = _G.tracers
+                d.tr.From = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y)
+                d.tr.To = Vector2.new(pos.X, pos.Y + sizeY/2)
             else for _, v in pairs(d) do v.Visible = false end end
         else for _, v in pairs(d) do v.Visible = false end end
     end
     
-    if _G.aimOn and UIS:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then
+    if _G.aimOn then
         local target = nil; local minDist = math.huge
         for _, p in pairs(Players:GetPlayers()) do
-            if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("Head") and p.Team ~= LocalPlayer.Team then
-                local headPos, onS = Camera:WorldToViewportPoint(p.Character.Head.Position)
-                if onS then
-                    local dist = (Vector2.new(headPos.X, headPos.Y) - UIS:GetMouseLocation()).Magnitude
-                    if dist < minDist then minDist = dist; target = p.Character.Head end
+            if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("Head") and p.Character:FindFirstChildOfClass("Humanoid").Health > 0 then
+                local head = p.Character.Head
+                local headPos, onS = Camera:WorldToViewportPoint(head.Position)
+                if onS and IsVisible(head) then
+                    local dist = (Vector2.new(headPos.X, headPos.Y) - Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)).Magnitude
+                    if dist < minDist then minDist = dist; target = head end
                 end
             end
         end
-        if target then Camera.CFrame = CFrame.new(Camera.CFrame.Position, target.Position) end
+        if target then 
+            Camera.CFrame = CFrame.new(Camera.CFrame.Position, target.Position)
+        end
     end
 end)
 
--- Драг
 local dragging, dragStart, startPos
 MainMenu.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then dragging = true; dragStart = i.Position; startPos = MainMenu.Position end end)
 UIS.InputChanged:Connect(function(i) if dragging and i.UserInputType == Enum.UserInputType.MouseMovement then
