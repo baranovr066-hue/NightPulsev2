@@ -1,0 +1,209 @@
+local ScreenGui = Instance.new("ScreenGui")
+local MainFrame = Instance.new("Frame")
+local UICorner = Instance.new("UICorner")
+local TopBar = Instance.new("Frame")
+local Title = Instance.new("TextLabel")
+local ContentFrame = Instance.new("Frame")
+local ToggleButton = Instance.new("TextButton")
+local ToggleCorner = Instance.new("UICorner")
+local UIListLayout = Instance.new("UIListLayout")
+local UIPadding = Instance.new("UIPadding")
+
+-- Настройка UI
+ScreenGui.Name = "VortexHub_UI"
+ScreenGui.Parent = game:GetService("CoreGui")
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+MainFrame.Name = "MainFrame"
+MainFrame.Parent = ScreenGui
+MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+MainFrame.Position = UDim2.new(0.5, -200, 0.5, -125)
+MainFrame.Size = UDim2.new(0, 400, 0, 480)
+MainFrame.Active = true
+MainFrame.Draggable = true
+
+UICorner.CornerRadius = UDim.new(0, 10)
+UICorner.Parent = MainFrame
+
+TopBar.Name = "TopBar"
+TopBar.Parent = MainFrame
+TopBar.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+TopBar.Size = UDim2.new(1, 0, 0, 40)
+
+local TopCorner = Instance.new("UICorner")
+TopCorner.CornerRadius = UDim.new(0, 10)
+TopCorner.Parent = TopBar
+
+Title.Name = "Title"
+Title.Parent = TopBar
+Title.BackgroundTransparency = 1
+Title.Position = UDim2.new(0, 15, 0, 0)
+Title.Size = UDim2.new(1, -15, 1, 0)
+Title.Font = Enum.Font.GothamBold
+Title.Text = "Vortex Hub | MM2"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.TextSize = 16.000
+Title.TextXAlignment = Enum.TextXAlignment.Left
+
+ContentFrame.Name = "ContentFrame"
+ContentFrame.Parent = MainFrame
+ContentFrame.BackgroundTransparency = 1
+ContentFrame.Position = UDim2.new(0, 0, 0, 45)
+ContentFrame.Size = UDim2.new(1, 0, 1, -45)
+
+UIListLayout.Parent = ContentFrame
+UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+UIListLayout.Padding = UDim.new(0, 5)
+
+UIPadding.Parent = ContentFrame
+UIPadding.PaddingLeft = UDim.new(0, 10)
+UIPadding.PaddingTop = UDim.new(0, 5)
+
+-- Кнопка переключения (Перетаскиваемая)
+ToggleButton.Name = "ToggleButton"
+ToggleButton.Parent = ScreenGui
+ToggleButton.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+ToggleButton.Position = UDim2.new(0, 10, 0.5, -20)
+ToggleButton.Size = UDim2.new(0, 120, 0, 40)
+ToggleButton.Font = Enum.Font.GothamBold
+ToggleButton.Text = "Vortex: ON/OFF"
+ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+ToggleButton.TextSize = 12.000
+ToggleButton.Active = true
+ToggleButton.Draggable = true
+ToggleCorner.CornerRadius = UDim.new(0, 8)
+ToggleCorner.Parent = ToggleButton
+
+ToggleButton.MouseButton1Click:Connect(function()
+    MainFrame.Visible = not MainFrame.Visible
+end)
+
+-- Функция создания кнопок в меню
+local function CreateButton(name, defaultText, callback)
+    local btn = Instance.new("TextButton")
+    local corner = Instance.new("UICorner")
+    btn.Name = name
+    btn.Parent = ContentFrame
+    btn.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
+    btn.Size = UDim2.new(0, 380, 0, 40)
+    btn.Font = Enum.Font.GothamBold
+    btn.Text = defaultText .. ": OFF"
+    btn.TextColor3 = Color3.fromRGB(255, 0, 0)
+    btn.TextSize = 14.000
+    corner.Parent = btn
+    
+    local enabled = false
+    btn.MouseButton1Click:Connect(function()
+        enabled = not enabled
+        btn.Text = defaultText .. (enabled and ": ON" or ": OFF")
+        btn.TextColor3 = enabled and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
+        callback(enabled)
+    end)
+end
+
+-- Переменные функций
+local esp_active = false
+local gun_esp_active = false
+local silent_aim_active = false
+local coin_farm_active = false
+local auto_pickup_gun = false
+local reach_active = false
+
+-- Создание кнопок
+CreateButton("ESPBtn", "Role ESP", function(state) esp_active = state end)
+CreateButton("GunESPBtn", "Gun Drop ESP", function(state) gun_esp_active = state end)
+CreateButton("SilentAimBtn", "Silent Aim (Sheriff)", function(state) silent_aim_active = state end)
+CreateButton("CoinFarmBtn", "Auto Farm Coins", function(state) coin_farm_active = state end)
+CreateButton("PickupGunBtn", "Auto Pickup Gun", function(state) auto_pickup_gun = state end)
+CreateButton("ReachBtn", "Murderer Reach", function(state) reach_active = state end)
+
+local Player = game.Players.LocalPlayer
+local RunService = game:GetService("RunService")
+
+-- Универсальный поиск пистолета на карте
+local function GetGunDrop()
+    for _, v in pairs(workspace:GetDescendants()) do
+        if v.Name == "GunDrop" or (v:IsA("BasePart") and v.Parent and v.Parent.Name == "GunDrop") then
+            return v:IsA("Model") and v:FindFirstChildWhichIsA("BasePart") or v
+        end
+    end
+    return nil
+end
+
+-- Цикл для Gun ESP и Pickup
+task.spawn(function()
+    while task.wait(0.5) do
+        local gun = GetGunDrop()
+        if gun then
+            if auto_pickup_gun and Player.Character and Player.Character:FindFirstChild("HumanoidRootPart") then
+                Player.Character.HumanoidRootPart.CFrame = gun.CFrame
+            end
+            
+            local gh = gun:FindFirstChild("VortexGunESP")
+            if gun_esp_active then
+                if not gh then 
+                    gh = Instance.new("Highlight", gun) 
+                    gh.Name = "VortexGunESP" 
+                    gh.FillColor = Color3.fromRGB(255, 255, 0)
+                    gh.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+                end
+                gh.Enabled = true
+            elseif gh then gh.Enabled = false end
+        end
+    end
+end)
+
+-- Основной цикл (ESP и Reach)
+RunService.RenderStepped:Connect(function()
+    -- Reach для мардера
+    local knife = Player.Character and Player.Character:FindFirstChild("Knife") or Player.Backpack:FindFirstChild("Knife")
+    if knife and knife:FindFirstChild("Handle") then
+        knife.Handle.Size = reach_active and Vector3.new(20, 20, 20) or Vector3.new(1, 1, 1)
+        knife.Handle.Transparency = reach_active and 0.8 or 0
+    end
+
+    -- Role ESP
+    for _, p in pairs(game.Players:GetPlayers()) do
+        if p ~= Player and p.Character then
+            local h = p.Character:FindFirstChild("VortexESP")
+            if esp_active then
+                if not h then h = Instance.new("Highlight", p.Character) h.Name = "VortexESP" end
+                local isM = p.Backpack:FindFirstChild("Knife") or p.Character:FindFirstChild("Knife")
+                local isS = p.Backpack:FindFirstChild("Gun") or p.Character:FindFirstChild("Gun")
+                h.FillColor = isM and Color3.fromRGB(255,0,0) or isS and Color3.fromRGB(0,0,255) or Color3.fromRGB(0,255,0)
+                h.Enabled = true
+            elseif h then h.Enabled = false end
+        end
+    end
+end)
+
+-- Silent Aim (только по мардеру)
+local oldNamecall
+oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
+    local method = getnamecallmethod()
+    local args = {...}
+    if silent_aim_active and method == "FireServer" and self.Name == "ShootGun" then
+        for _, p in pairs(game.Players:GetPlayers()) do
+            if p.Character and (p.Backpack:FindFirstChild("Knife") or p.Character:FindFirstChild("Knife")) then
+                args[1] = p.Character.HumanoidRootPart.Position
+                return oldNamecall(self, unpack(args))
+            end
+        end
+    end
+    return oldNamecall(self, ...)
+end)
+
+-- Фарм монет
+task.spawn(function()
+    while true do
+        task.wait(0.2)
+        if coin_farm_active and Player.Character and Player.Character:FindFirstChild("HumanoidRootPart") then
+            for _, v in pairs(workspace:GetDescendants()) do
+                if coin_farm_active and (v.Name == "Coin_Y" or v.Name == "Coin_B") and v:IsA("BasePart") then
+                    Player.Character.HumanoidRootPart.CFrame = v.CFrame
+                    task.wait(0.2)
+                end
+            end
+        end
+    end
+end)
